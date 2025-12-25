@@ -1,32 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>test1</title>
+    <style>
+        body {
+			font-family: monospace;
+			white-space: pre-wrap;
+			background-color: #f9f9f9;
+			padding: 2em;
+			color: #111;
+		}
+	</style>
+</head>
+<body>
+<pre>
+11111111111111111111
+	
 hostnamectl hostname isp.au-team.irpo
 hostnamectl hostname hq-rtr.au-team.irpo
 hostnamectl hostname hq-srv.au-team.irpo
 hostnamectl hostname br-rtr.au-team.irpo
 hostnamectl hostname br-srv.au-team.irpo
 hostnamectl hostname hq-cli.au-team.irpo
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ISP, BR-RTR, HQ-RTR:  
 echo “net.ipv4.ip_forward=1” >> /etc/sysctl.conf 
 sysctl -p
-
-Имя устройства            IP-адрес 				                     Шлюз по умолчанию 
-ISP 	                    ens33: DHCP         			           ------
-		                      ens34: 172.16.4.1 /28 
-			                    ens35: 172.16.5.1 /28 
+ 
+ISP: 	                    
+ens33: DHCP - -----------------------------------
+ens34: 172.16.4.1 /28 
+ens35: 172.16.5.1 /28 
 	 
-HQ-RTR 			              ens33: 172.16.4.2/28 			           172.16.4.1
-			                    ens34.vlan100: 192.168.100.1/26 
-			                    ens34.vlan200: 192.168.200.1/28 
-			                    ens34.vlan999: 192.168.99.1/29 	
+HQ-RTR:
+ens33: 172.16.4.2/28 - 172.16.4.1
+ens34.vlan100: 192.168.100.1/26 
+ens34.vlan200: 192.168.200.1/28 
+ens34.vlan999: 192.168.99.1/29 	
 	
-BR-RTR 			              ens33: 172.16.5.2/28     		         172.16.5.1
-		                      ens34: 172.30.100.1/27
+BR-RTR:
+ens33: 172.16.5.2/28 - 172.16.5.1
+ens34: 172.30.100.1/27
  	
-HQ-SRV 			              ens33.vlan100: 192.168.100.10/26     192.168.100.1
+HQ-SRV:
+ens33.vlan100: 192.168.100.10/26 - 192.168.100.1
  
-BR-SRV 			              ens33: 172.30.100.10/27 	           172.30.100.1
+BR-SRV:
+ens33: 172.30.100.10/27 - 172.30.100.1
  
-HQ-CLI 			              ens33.vlan200: DHCP 	               DHCP 
+HQ-CLI:
+ens33.vlan200: DHCP - DHCP 
 
 --- ОБНОВЛЯЕМ ИНТЕРФЕЙСЫ ОБЯЗАТЕЛЬНО
 --- Динамическая сетевая трансляция
@@ -83,16 +107,26 @@ ssh -l sshuser 192.168.100.10 -p 2026 ------ HQ-RTR
 Стрелочка вправо – добавить
 Выбираем IP-Туннель
 
-HQ-RTR  			                       BR-RTR
-Имя профиля tun0 		                 Имя профиля tun0
-Устройство tun0			                 Устройство tun0
-Режим GRE			                       Режим GRE
-Родительский ens33	                 Родительский ens33
-Локальный IP 172.16.4.2		           Локальный IP 172.16.5.2
-Удаленный IP 172.16.5.2		           Удаленный IP 172.16.4.2
-Конфигурация IPv4 (Вручную)          Конфигурация IPv4 (Вручную)
-Адреса 10.10.10.1/30		             Адреса 10.10.10.2/30
+HQ-RTR:			                       
+Имя профиля tun0 		                 
+Устройство tun0			                 
+Режим GRE			                      
+Родительский ens33	                 
+Локальный IP 172.16.4.2		          
+Удаленный IP 172.16.5.2		           
+Конфигурация IPv4 (Вручную)         
+Адреса 10.10.10.1/30		             
 
+BR-RTR:	
+Имя профиля tun0
+Устройство tun0
+Режим GRE	
+Родительский ens33
+Локальный IP 172.16.5.2	
+Удаленный IP 172.16.4.2
+Конфигурация IPv4 (Вручную)
+Адреса 10.10.10.2/30	
+	
 HQ-RTR, BR-RTR:
 nmcli connection modify tun0 ip-tunnel.ttl 64
 И перезапускаем tunnel через nmtui (выключаем и включаем интерфейс)
