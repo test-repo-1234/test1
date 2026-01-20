@@ -14,7 +14,9 @@
 	</style>
 </head>
 <body>
-<pre>	
+<pre>
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+	
 hostnamectl hostname isp.au-team.irpo
 hostnamectl hostname hq-rtr.au-team.irpo
 hostnamectl hostname hq-srv.au-team.irpo
@@ -683,8 +685,8 @@ server {
 }
 
 - systemctl restart nginx
-На hq-cli в браузере открываем docker.au-team.irpo, должен открыться сайт из задания 6.
-Открываем web.au-team.irpo, там сайт из задания 7.
+На hq-cli в браузере открываем http://docker.au-team.irpo, должен открыться сайт из задания 6.
+Открываем http://web.au-team.irpo, должен открыться сайт из задания 7.
 
 10) Настройка web-based аутентификации на ISP:
 - dnf install httpd-tools -y
@@ -697,7 +699,7 @@ server {
 Проверяем:
 - nginx -t
 - systemctl restart nginx
-На hq-cli в браузере открываем web.au-team.irpo: логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
+На hq-cli в браузере открываем http://web.au-team.irpo: логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
 
 11) Установка Яндекс Браузера:
 Заходим в «Окно настройки РЕДОС», переходим во вкладку «Партнерские приложения» и нажимаем на Яндекс браузер. 
