@@ -14,9 +14,7 @@
 	</style>
 </head>
 <body>
-<pre>
-11111111111111111111
-	
+<pre>	
 hostnamectl hostname isp.au-team.irpo
 hostnamectl hostname hq-rtr.au-team.irpo
 hostnamectl hostname hq-srv.au-team.irpo
@@ -29,9 +27,9 @@ echo “net.ipv4.ip_forward=1” >> /etc/sysctl.conf
 sysctl -p
  
 ISP: 	                    
-ens33: DHCP - -----------------------------------
-ens34: 172.16.4.1 /28 
-ens35: 172.16.5.1 /28 
+ens33: DHCP - DHCP
+ens34: 172.16.4.1/28 
+ens35: 172.16.5.1/28 
 	 
 HQ-RTR:
 ens33: 172.16.4.2/28 - 172.16.4.1
@@ -52,9 +50,9 @@ ens33: 172.30.100.10/27 - 172.30.100.1
 HQ-CLI:
 ens33.vlan200: DHCP - DHCP 
 
---- ОБНОВЛЯЕМ ИНТЕРФЕЙСЫ ОБЯЗАТЕЛЬНО
---- Динамическая сетевая трансляция
-НА ISP
+--- Обновляем обязательно интерфейсы
+--- Динамическая сетевая трансляция на ISP:
+	
 dnf install iptables-services -y
 systemctl enable --now iptables
 iptables -F
@@ -66,24 +64,21 @@ systemctl disable firewalld
 iptables-save > /etc/sysconfig/iptables
 ПРОВЕРЯЕМ ПИНГИ НА 10.39.0.1 (8.8.8.8) С HQ-RTR и BR-RTR
 
---- Создайте пользователя sshuser на серверах HQ-SRV и BR-SRV
+--- Создание пользователя sshuser на серверах HQ-SRV и BR-SRV
 useradd -m -U -s /bin/bash -u 1010 sshuser
 passwd sshuser
 P@ssw0rd
 P@ssw0rd
 echo “sshuser ALL=(ALL) NOPASSWD: ALL” >> /etc/sudoers
 
---- Создайте пользователя net_admin на маршрутизаторах HQ-RTR и
-BR-RTR
+--- Создание пользователя net_admin на маршрутизаторах HQ-RTR и BR-RTR
 useradd -m -U -s /bin/bash net_admin
 passwd net_admin
 P@$$w0rd
 P@$$w0rd
 echo “net_admin ALL=(ALL) NOPASSWD: ALL” >> /etc/sudoers
 
---- Настройка безопасного удаленного доступа на серверах HQ-SRV
-и BR-SRV
-Создаём баннер
+--- Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
 echo “Authorized access only” > /etc/ssh/banner.txt
 
 Настраиваем SSH
@@ -108,24 +103,24 @@ ssh -l sshuser 192.168.100.10 -p 2026 ------ HQ-RTR
 Выбираем IP-Туннель
 
 HQ-RTR:			                       
-Имя профиля tun0 		                 
-Устройство tun0			                 
-Режим GRE			                      
-Родительский ens33	                 
-Локальный IP 172.16.4.2		          
-Удаленный IP 172.16.5.2		           
-Конфигурация IPv4 (Вручную)         
-Адреса 10.10.10.1/30		             
+Имя профиля - tun0 		                 
+Устройство - tun0			                 
+Режим - GRE			                      
+Родительский - ens33	                 
+Локальный IP - 172.16.4.2		          
+Удаленный IP - 172.16.5.2		           
+Конфигурация IPv4 - (Вручную)         
+Адреса - 10.10.10.1/30		             
 
 BR-RTR:	
-Имя профиля tun0
-Устройство tun0
-Режим GRE	
-Родительский ens33
-Локальный IP 172.16.5.2	
-Удаленный IP 172.16.4.2
-Конфигурация IPv4 (Вручную)
-Адреса 10.10.10.2/30	
+Имя профиля - tun0
+Устройство - tun0
+Режим - GRE	
+Родительский - ens33
+Локальный IP - 172.16.5.2	
+Удаленный IP - 172.16.4.2
+Конфигурация IPv4 - (Вручную)
+Адреса - 10.10.10.2/30	
 	
 HQ-RTR, BR-RTR:
 nmcli connection modify tun0 ip-tunnel.ttl 64
@@ -192,9 +187,8 @@ option domain-name “au-team.irpo”;
 systemctl enable --now dhcpd
 dhcpd
 
-ПРОВЕРЯЕМ НА HQ-RTR, ЧТО ЕСТЬ ЗАПИСЬ В ФАЙЛЕ, УКАЗЫВАЮЩАЯ
-НА ПОЛУЧЕНИЕ АДРЕС КЛИЕНТОМ: ЕСЛИ на HQ-CLI перезагрузить интрефейс ens33.100
-и ввести ip a, должен появиться ip 192.168.200.2
+ПРОВЕРЯЕМ НА HQ-RTR, ЧТО ЕСТЬ ЗАПИСЬ В ФАЙЛЕ, УКАЗЫВАЮЩАЯ НА ПОЛУЧЕНИЕ АДРЕСА КЛИЕНТОМ: 
+ЕСЛИ на HQ-CLI перезагрузить интрефейс ens33.100 и ввести ip a, должен появиться ip 192.168.200.2
 cat /var/lib/dhcpd/dhcpd.leases
 
 --- НА HQ-SRV
@@ -326,24 +320,20 @@ chmod -R 777 /opt/dns
 named-checkconf -z
 systemctl restart named
 
---- Далее заходим в nmtui и меняем ДНС сервер с (10.39.0.1) на
-192.168.100.10. Также указываем домен поиска au-team.irpo
-После этого в nmtui переходим на вкладку «Активировать
-подключение». Выключаем и включаем интерфейс, на который ставили ДНС.
-НА HQ-CLI И ПРОВЕРЯЕМ РАБОТОСПОБНОСТЬ
+--- Далее заходим в nmtui и меняем ДНС сервер с (10.39.0.1) на 192.168.100.10. Также указываем домен поиска au-team.irpo.
+После этого в nmtui переходим на вкладку «Активировать подключение». Выключаем и включаем интерфейс, на который ставили ДНС.
+НА HQ-CLI ПРОВЕРЯЕМ РАБОТОСПОБНОСТЬ
 ping br-rtr
 ping br-srv
 ping hq-rtr
 ping hq-srv
 ping ya.ru
 
---- Настройте часовой пояс на всех устройствах, согласно месту
-проведения экзамена.
+--- Настройка часового пояса на всех устройствах, согласно месту проведения экзамена.
 timedatectl set-timezone Europe/Moscow
-timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕНЯТЬ НЕ
-ПРОСЯТ)
+timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕНЯТЬ НЕ ПРОСЯТ)
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Перезагружаем днс на HQ-SRV - systemctl restart named
 
@@ -363,8 +353,7 @@ timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕН�
 --- permitted_enctypes = ...
 
 - samba-tool domain provision --use-rfc2307 --interactive
-Далее на моменте DNS backend пишем “NONE”. Затем указываем
-пароль администратора: P@ssw0rd
+Далее на моменте DNS backend пишем “NONE”. Затем указываем пароль администратора: P@ssw0rd
 
 - cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
 - nano /etc/krb5.conf
@@ -380,13 +369,12 @@ timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕН�
 - kinit administrator@AU-TEAM.IRPO (P@ssw0rd)
 
 Переходим на HQ-CLI, переходим в root (sudo -i) и пишем:
-### echo “<ip-адрес br-srv> au-team.irpo” >> /etc/hosts 
+### echo “[ip.address br-srv] au-team.irpo” >> /etc/hosts 
 - echo “172.30.100.10 au-team.irpo” >> /etc/hosts
 ### echo 172.30.100.10 au-team.irpo >> /etc/hosts 
 - realm join -U -v Administrator@AU-TEAM.IRPO (P@ssw0rd)
 
 Возвращаемся на BR-SRV. Далее создаем группу hq и добавляем в нее всех созданных пользователей.
-
 - samba-tool group add hq
 - for i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; samba-tool group addmembers hq hquser$i; done
 Проверяем: Должен отобразиться список пользователей
@@ -424,16 +412,13 @@ au-team.irpo = AU-TEAM.IRPO
 
 2) Конфигурация файлового хранилища на HQ-SRV:
 В VMWare нажимаем сверху ПКМ на HQ-SRV, выбираем последний пункт Settings и нажимаем кнопку add. Выбираем Hard Drive.
-Типдиска -SATA, “Create anew virtualdisk”, Maximumdisk size -1.В имени диска меняем цифру на конце на 10,11 соответственно для 2 дисков. Нажимаем Finish.
+Тип диска-SATA, “Create a new virtual disk”, Maximum disk size-1.В имени диска меняем цифру на конце на 10,11 соответственно для 2 дисков. Нажимаем Finish.
 
 Проверяем наличие дисков командой. Должны быть sdb, sdc.
 - lsblk
 
 - fdisk /dev/sdb
-g
-n
-Жмем Enter 3 раза
-W
+g -> n -> Жмем Enter 3 раза -> W
 Далее проделываем тоже самое для диска sdc.
 
 - lsblk
@@ -469,7 +454,7 @@ W
 - mkdir /mnt/nfs
 - nano /etc/fstab
 Добавляем следующую строчку:
-### [ip.address.hq-srv.100]:/raid/nfs /mnt/nfs nfs auto 0 0
+### [ip.address.hq-srv.vlan100]:/raid/nfs /mnt/nfs nfs auto 0 0
 - 192.168.100.10:/raid/nfs /mnt/nfs nfs auto0 0
 - mount -a
 Проверяем:
@@ -491,7 +476,7 @@ hwtimestamp *
 На HQ-SRV,HQ-CLI,BR-RTR,BR-SRV:
 - nano /etc/chrony.conf
 Комментируем все сервера и добавляем созданный:
-###[ip.address.isp_ens34] iburst prefer
+###server [ip.address.isp.ens34] iburst prefer
 - server 172.16.4.1 iburst prefer
 
 Далее перезапускаем сервис:
@@ -515,13 +500,13 @@ HQ-SRV, BR-SRV:
 - nano /etc/ansible/demo.ini
 
 ### [HQ-SRV]
-### <ip-адрес hq-srv.100> ansible_user=sshuser ansible_port=2026
+### [ip-адрес hq-srv.vlan100] ansible_user=sshuser ansible_port=2026
 ### [HQ-CLI]
-### <ip-адрес hq-cli> ansible_user=username
+### [ip-адрес hq-cli] ansible_user=username
 ### [HQ-RTR]
-### <ip-адрес hq-rtr_ens34.100> ansible_user=net_admin
+### [ip-адрес hq-rtr.ens34.vlan100] ansible_user=net_admin
 ### [BR-RTR]
-### <ip-адрес br-rtr_ens34> ansible_user=net_admin
+### [ip-адрес br-rtr.ens34] ansible_user=net_admin
 
 [HQ-SRV]
 192.168.100.10 ansible_user=sshuser ansible_port=2026
@@ -599,7 +584,7 @@ volumes:
 - docker-compose -f site.yml up -d
 
 Далее переходим на HQ-CLI, заходим в браузер и вводим в адресную строку: 
-### <ip-адрес br-srv_ens33>:8080.
+### [ip-адрес br-srv.ens33]:8080.
 - 172.30.100.10:8080.
 
 7) Развертывание веб приложения на сервере HQ-SRV:
@@ -636,8 +621,8 @@ $dbname = 'webdb'
 
 - systemctl restart httpd
 На HQ-CLI снова открываем в браузере:
-### <ip-адрес hq-srv_ens33.100>
-192.168.100.10.
+### [ip-адрес hq-srv.ens33.vlan100]
+- 192.168.100.10.
 
 HQ-SRV:
 - nano /opt/dns/au-team.irpo
@@ -651,27 +636,27 @@ docker A       172.16.5.1
 
 8) Статическая трансляция портов:
 BR-RTR:
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d <ip-адрес br-rtr ens33>/28 --dport 8080 -j DNAT --to-destination <ip-адрес br-srv>:8080
+### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес br-rtr.ens33]/28 --dport 8080 -j DNAT --to-destination [ip-адрес.br-srv]:8080
 - iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.5.2/28 --dport 8080 -j DNAT --to-destination 172.30.100.10:8080
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d <ip-адрес br-rtr ens33>/28 --dport 2026 -j DNAT --to-destination <ip-адрес br-srv>:2026
+### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес br-rtr.ens33]/28 --dport 2026 -j DNAT --to-destination [ip-адрес.br-srv]:2026
 - iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.5.2/28 --dport 2026 -j DNAT --to-destination 172.30.100.10:2026
 - iptables-save > /etc/sysconfig/iptables
-### На hq-cli в браузере открываем <ip-адрес br-rtr ens33>:8080, должен открыться сайт как в задании 6.
+### На hq-cli в браузере открываем [ip-адрес br-rtr.ens33]:8080, должен открыться сайт как в задании 6.
 ### На hq-cli в браузере открываем 172.16.5.2:8080, должен открыться сайт как в задании 6.
 HQ-SRV:
-### ssh sshuser@<ip-адрес br-rtr ens33> -p 2026
+### ssh sshuser@[ip-адрес br-rtr.ens33] -p 2026
 - ssh sshuser@172.16.5.2 -p 2026, должно подключить к br-srv.
 
 HQ-RTR:
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d <ip-адрес hq-rtr ens33>/28 --dport 8080 -j DNAT --to-destination <ip-адрес hq-srv.100>:80
+### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес hq-rtr.ens33]/28 --dport 8080 -j DNAT --to-destination [ip-адрес hq-srv.vlan100]:80
 - iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.4.2/28 --dport 8080 -j DNAT --to-destination 192.168.100.10:80
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d <ip-адрес hq-rtr ens33>/28 --dport 2026 -j DNAT --to-destination <ip-адрес hq-srv.100>:2026
+### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес hq-rtr.ens33]/28 --dport 2026 -j DNAT --to-destination [ip-адрес hq-srv.vlan100]:2026
 - iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.4.2/28 --dport 2026 -j DNAT --to-destination 192.168.100.10:2026
 - iptables-save > /etc/sysconfig/iptables
-### На hq-cli в браузере открываем <ip-адрес hq-rtr ens33>:8080, должен открыться сайт как в задании 7.
+### На hq-cli в браузере открываем [ip-адрес hq-rtr.ens33]:8080, должен открыться сайт как в задании 7.
 ### На hq-cli в браузере открываем 172.16.4.2:8080, должен открыться сайт как в задании 7.
 BR-RTR:
-### ssh sshuser@<ip-адрес hq-rtr ens33> -p 2026
+### ssh sshuser@[ip-адрес hq-rtr.ens33] -p 2026
 - ssh sshuser@172.16.4.2 -p 2026, должно подключить к hq-srv.
 
 9) Настройка веб-сервера nginx как обратный прокси-сервер на ISP:
@@ -684,7 +669,7 @@ server {
 	listen 80;
 	server_name docker.au-team.irpo;
  	location / {
-		### proxy_pass http://<ip-адрес br-rtr_ens33>:8080;
+		### proxy_pass http://[ip-адрес br-rtr.ens33]:8080;
 		proxy_pass http://172.16.5.2:8080;
 	}
 }
@@ -692,7 +677,7 @@ server {
 	listen 80;
 	server_name web.au-team.irpo;
  	location / {
-		### proxy_pass http://<ip-адрес hq-rtr_ens33>:8080;
+		### proxy_pass http://[ip-адрес hq-rtr.ens33]:8080;
 		proxy_pass http://172.16.4.2:8080;
 	}
 }
@@ -712,9 +697,8 @@ server {
 Проверяем:
 - nginx -t
 - systemctl restart nginx
-На hq-cli в браузере открываем web.au-team.irpo
-логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
+На hq-cli в браузере открываем web.au-team.irpo: логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
 
 11) Установка Яндекс Браузера:
-Заходим в «Окно настройки РЕДОС», переходим во вкладку «Партнерские приложения» и нажимаем на Яндекс браузер. После загрузки нажимаем на клавишу WIN и выбираем «Другие приложения».
-Переходим на вторую страницу и запускаем браузер.
+Заходим в «Окно настройки РЕДОС», переходим во вкладку «Партнерские приложения» и нажимаем на Яндекс браузер. 
+После загрузки нажимаем на клавишу WIN и выбираем «Другие приложения». Переходим на вторую страницу и запускаем браузер.
