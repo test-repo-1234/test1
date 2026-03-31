@@ -16,7 +16,6 @@
 <body>
 <pre>
 --------------------------------------------------------------------------------------------------------------------------------------------------------
-111	
 hostnamectl hostname isp.au-team.irpo
 hostnamectl hostname hq-rtr.au-team.irpo
 hostnamectl hostname hq-srv.au-team.irpo
@@ -346,9 +345,7 @@ timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕН�
 - sudo mv /etc/krb5.conf /etc/krb5.conf.bak
 - nano /etc/krb5.conf.d/crypto-policies
 
---- Для этого ставим курсор на существующую строчку permitted_enctypes,
-нажимаем CTRL+K и три раза CTRL+U. После этого изменяем начало первых
-двух строчек:
+--- Для этого ставим курсор на существующую строчку permitted_enctypes, нажимаем CTRL+K и три раза CTRL+U. После этого изменяем начало первых двух строчек:
 
 --- default_tgs_enctypes = ...
 --- default_tkt_enctypes = ...
@@ -371,12 +368,12 @@ timedatectl (ПРОВЕРИТЬ ЗОНУ, ПО ЗАДАНИЮ ВРЕМЯ МЕН�
 - kinit administrator@AU-TEAM.IRPO (P@ssw0rd)
 
 Переходим на HQ-CLI, переходим в root (sudo -i) и пишем:
-### echo “[ip.address br-srv] au-team.irpo” >> /etc/hosts 
-- echo “172.30.100.10 au-team.irpo” >> /etc/hosts
-### echo 172.30.100.10 au-team.irpo >> /etc/hosts 
+### echo "<ip-адрес br-srv> au-team.irpo" >> /etc/hosts 
+- echo "172.30.100.2 au-team.irpo" >> /etc/hosts
 - realm join -U -v Administrator@AU-TEAM.IRPO (P@ssw0rd)
 
 Возвращаемся на BR-SRV. Далее создаем группу hq и добавляем в нее всех созданных пользователей.
+
 - samba-tool group add hq
 - for i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; samba-tool group addmembers hq hquser$i; done
 Проверяем: Должен отобразиться список пользователей
@@ -401,6 +398,7 @@ AU-TEAM.IRPO = {
 au-team.irpo = AU-TEAM.IRPO
 
 Далее переходим в «Настройки» - «Сетевые учетные записи». Выбираем Kerberos, вводим administrator@AU-TEAM.IRPO и P@ssw0rd.
+
 - sss_cache -E
 - visudo
 Пишем в файл следующую строку:
@@ -414,13 +412,17 @@ au-team.irpo = AU-TEAM.IRPO
 
 2) Конфигурация файлового хранилища на HQ-SRV:
 В VMWare нажимаем сверху ПКМ на HQ-SRV, выбираем последний пункт Settings и нажимаем кнопку add. Выбираем Hard Drive.
-Тип диска-SATA, “Create a new virtual disk”, Maximum disk size-1.В имени диска меняем цифру на конце на 10,11 соответственно для 2 дисков. Нажимаем Finish.
+Тип диска - SATA, “Create a new virtual disk”, Maximum disk size - 1.В имени диска меняем цифру на конце на 10,11 соответственно для 2 дисков.
+Нажимаем Finish.
 
 Проверяем наличие дисков командой. Должны быть sdb, sdc.
 - lsblk
 
 - fdisk /dev/sdb
-g -> n -> Жмем Enter 3 раза -> W
+g
+n
+Жмем Enter 3 раза
+W
 Далее проделываем тоже самое для диска sdc.
 
 - lsblk
@@ -456,14 +458,13 @@ g -> n -> Жмем Enter 3 раза -> W
 - mkdir /mnt/nfs
 - nano /etc/fstab
 Добавляем следующую строчку:
-### [ip.address.hq-srv.vlan100]:/raid/nfs /mnt/nfs nfs auto 0 0
-- 192.168.100.10:/raid/nfs /mnt/nfs nfs auto0 0
+### [ip.address.hq-srv.100]:/raid/nfs /mnt/nfs nfs auto 0 0
+- 192.168.100.2:/raid/nfs /mnt/nfs nfs auto0 0
 - mount -a
 Проверяем:
 - df -h
 
-4) Служба сетевого времени (chrony)
-На ISP:
+4) Служба сетевого времени (chrony) на ISP:
 - nano /etc/chrony.conf
 
 комментируем первые 3 сервера (ntp1-3) и пишем:
@@ -478,8 +479,8 @@ hwtimestamp *
 На HQ-SRV,HQ-CLI,BR-RTR,BR-SRV:
 - nano /etc/chrony.conf
 Комментируем все сервера и добавляем созданный:
-###server [ip.address.isp.ens34] iburst prefer
-- server 172.16.4.1 iburst prefer
+###[ip.address.isp_ens34] iburst prefer
+- server 172.16.1.1 iburst prefer
 
 Далее перезапускаем сервис:
 - systemctl restart chronyd
@@ -501,26 +502,20 @@ HQ-SRV, BR-SRV:
 5) Установка ansible на сервере BR-SRV
 - nano /etc/ansible/demo.ini
 
-### [HQ-SRV]
-### [ip-адрес hq-srv.vlan100] ansible_user=sshuser ansible_port=2026
-### [HQ-CLI]
-### [ip-адрес hq-cli] ansible_user=username
-### [HQ-RTR]
-### [ip-адрес hq-rtr.ens34.vlan100] ansible_user=net_admin
-### [BR-RTR]
-### [ip-адрес br-rtr.ens34] ansible_user=net_admin
+###[all]
+###hq-srv ansible_host=<ip hq-srv> ansible_user=sshuser ansible_port=2026
+###hq-cli ansible_host=<ip hq-cli> ansible_user=username
+###hq-rtr ansible_host=<ip hq-rtr_ens34.100> ansible_user=net_admin
+###br-rtr ansible_host=<ip br-rtr_ens34> ansible_user=net_admin
 
-[HQ-SRV]
-192.168.100.10 ansible_user=sshuser ansible_port=2026
-[HQ-CLI]
-192.168.200.2 ansible_user=username
-[HQ-RTR]
-192.168.100.1 ansible_user=net_admin
-[BR-RTR]
-172.30.100.1 ansible_user=net_admin
+[all]
+hq-srv ansible_host=192.168.100.2 ansible_user=sshuser ansible_port=2026
+hq-cli ansible_host=192.168.200.2 ansible_user=username
+hq-rtr ansible_host=192.168.100.1 ansible_user=net_admin
+br-rtr ansible_host=172.30.100.1 ansible_user=net_admin
 
-- ssh-keygen -t rsa (пароль от sshuser, username - P@ssw0rd, net_admin - P@$$w0rd)
-- ssh-copy-id -p 2026 sshuser@192.168.100.10
+- ssh-keygen -t rsa
+- ssh-copy-id -p 2026 sshuser@192.168.100.2
 - ssh-copy-id username@192.168.200.2
 - ssh-copy-id net_admin@192.168.100.1
 - ssh-copy-id net_admin@172.30.100.1
@@ -537,9 +532,8 @@ interpreter_python=/usr/bin/python
 - ansible -m ping all
 
 6) Развертывание приложений в Docker на сервере BR-SRV:
-Перед развертыванием выполняем монтирование ISO образа с необходимыми Docker-образами. Для этого переходим через VMWare WorkStation в настройки виртуальной машины. 
-Там выбираем CD/DVD driver 1 > Use ISO image file > Browse > [DATA] > Additional.iso > Open < OK.
-- CD/DVD driver 1 > Location > Local Client > Use ISO image file > Browse > Additional.iso > Open < OK.
+Перед развертыванием выполняем монтирование ISO образа с необходимыми Docker-образами. Для этого переходим через VMWare WorkStation в настройки виртуальной машины.
+- CD/DVD driver 1 > Location > Remote Server > Use ISO image file > Browse > Additional.iso > Open < OK.
 - скачать образ: https://disk.yandex.ru/d/0MGlkrp2B9nXDw
 - Установить Additional.iso > в Браузере вводим IP стенда > Storage > Datastore browser > Upload > загружаем образ.
 
@@ -586,13 +580,12 @@ volumes:
 - docker-compose -f site.yml up -d
 
 Далее переходим на HQ-CLI, заходим в браузер и вводим в адресную строку: 
-### [ip-адрес br-srv.ens33]:8080.
-- 172.30.100.10:8080.
+### <ip-адрес br-srv_ens33>:8080.
+- 172.30.100.2:8080.
 
 7) Развертывание веб приложения на сервере HQ-SRV:
 Перед развертыванием выполняем монтирование ISO образа с необходимыми Docker-образами. Для этого переходим через VMWare WorkStation в настройки виртуальной машины. 
-Там выбираем CD/DVD driver 1 > Use ISO image file > Browse > [DATA] > Additional.iso > Open < OK.
-- CD/DVD driver 1 > Location > Local Client > Use ISO image file > Browse > Additional.iso > Open < OK.
+- CD/DVD driver 1 > Location > Remote Server > Use ISO image file > Browse > Additional.iso > Open < OK.
 - скачать образ: https://disk.yandex.ru/d/0MGlkrp2B9nXDw
 - Установить Additional.iso > в Браузере вводим IP стенда > Storage > Datastore brpwser > Upload > загружаем образ.
 
@@ -601,7 +594,7 @@ volumes:
 - systemctl enable --now mariadb httpd
 
 HQ-CLI:
-- вводим в Браузере - 192.168.100.10
+- вводим в Браузере - <ip hq-srv_ens33.100> 192.168.100.2
 HQ-SRV:
 - mysql_secure_installation
 - P@ssw0rd (n,n,y,y,y,y)
@@ -623,8 +616,7 @@ $dbname = 'webdb'
 
 - systemctl restart httpd
 На HQ-CLI снова открываем в браузере:
-### [ip-адрес hq-srv.ens33.vlan100]
-- 192.168.100.10.
+### <ip-адрес hq-srv_ens33.100> 192.168.100.2
 
 HQ-SRV:
 - nano /opt/dns/au-team.irpo
@@ -638,69 +630,453 @@ docker A       172.16.5.1
 
 8) Статическая трансляция портов:
 BR-RTR:
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес br-rtr.ens33]/28 --dport 8080 -j DNAT --to-destination [ip-адрес.br-srv]:8080
-- iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.5.2/28 --dport 8080 -j DNAT --to-destination 172.30.100.10:8080
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес br-rtr.ens33]/28 --dport 2026 -j DNAT --to-destination [ip-адрес.br-srv]:2026
-- iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.5.2/28 --dport 2026 -j DNAT --to-destination 172.30.100.10:2026
-- iptables-save > /etc/sysconfig/iptables
-### На hq-cli в браузере открываем [ip-адрес br-rtr.ens33]:8080, должен открыться сайт как в задании 6.
-### На hq-cli в браузере открываем 172.16.5.2:8080, должен открыться сайт как в задании 6.
+###<ip br-rtr_ens33 -> 172.16.2.2> 
+firewall-cmd --zone=trusted --add-rich-rule='rule family="ipv4" destination address="172.16.2.2" forward-port port="2026" protocol="tcp" to-port="2026" to-addr="172.30.100.2"' --permanent
+firewall-cmd --zone=trusted --add-rich-rule='rule family="ipv4" destination address="172.16.2.2" forward-port port="8080" protocol="tcp" to-port="8080" to-addr="172.30.100.2"' --permanent
+firewall-cmd --reload
+systemctl restart firewalld
 HQ-SRV:
-### ssh sshuser@[ip-адрес br-rtr.ens33] -p 2026
-- ssh sshuser@172.16.5.2 -p 2026, должно подключить к br-srv.
+### ssh sshuser@<ip-адрес br-rtr ens33> -p 2026
+- ssh sshuser@172.16.2.2 -p 2026, должно подключить к br-srv.
+### На hq-cli в браузере открываем <ip-адрес br-rtr ens33>:8080, должен открыться сайт как в задании 6.
+### На hq-cli в браузере открываем 172.16.2.2:8080, должен открыться сайт как в задании 6.
 
 HQ-RTR:
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес hq-rtr.ens33]/28 --dport 8080 -j DNAT --to-destination [ip-адрес hq-srv.vlan100]:80
-- iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.4.2/28 --dport 8080 -j DNAT --to-destination 192.168.100.10:80
-### iptables -t nat -A PREROUTING -p tcp -m tcp -d [ip-адрес hq-rtr.ens33]/28 --dport 2026 -j DNAT --to-destination [ip-адрес hq-srv.vlan100]:2026
-- iptables -t nat -A PREROUTING -p tcp -m tcp -d 172.16.4.2/28 --dport 2026 -j DNAT --to-destination 192.168.100.10:2026
-- iptables-save > /etc/sysconfig/iptables
-### На hq-cli в браузере открываем [ip-адрес hq-rtr.ens33]:8080, должен открыться сайт как в задании 7.
-### На hq-cli в браузере открываем 172.16.4.2:8080, должен открыться сайт как в задании 7.
+###<ip hq-rtr_ens33 -> 172.16.1.2>
+firewall-cmd --zone=trusted --add-rich-rule='rule family="ipv4" destination address="172.16.1.2" forward-port port="2026" protocol="tcp" to-port="2026" to-addr="192.168.100.2"' --permanent
+firewall-cmd --zone=trusted --add-rich-rule='rule family="ipv4" destination address="172.16.1.2" forward-port port="8080" protocol="tcp" to-port="80" to-addr="192.168.100.2"' --permanent
+firewall-cmd --reload
+systemctl restart firewalld
+### На hq-cli в браузере открываем <ip-адрес hq-rtr ens33>:8080, должен открыться сайт как в задании 7.
+### На hq-cli в браузере открываем 172.16.1.2:8080, должен открыться сайт как в задании 7.
 BR-RTR:
-### ssh sshuser@[ip-адрес hq-rtr.ens33] -p 2026
-- ssh sshuser@172.16.4.2 -p 2026, должно подключить к hq-srv.
+### ssh sshuser@<ip-адрес hq-rtr ens33> -p 2026
+- ssh sshuser@172.16.1.2 -p 2026, должно подключить к hq-srv.
 
 9) Настройка веб-сервера nginx как обратный прокси-сервер на ISP:
 - dnf install nginx -y 
 - systemctl enable --now nginx 
 - nano /etc/nginx/nginx.conf 
-В файле комментируем созданный по умолчанию сервер и добавляем 
-в него 2 других сервера:
+В файле комментируем созданный по умолчанию сервер и добавляем  в него 2 других сервера:
 server {
 	listen 80;
 	server_name docker.au-team.irpo;
  	location / {
-		### proxy_pass http://[ip-адрес br-rtr.ens33]:8080;
-		proxy_pass http://172.16.5.2:8080;
+		### proxy_pass http://<ip-адрес br-rtr_ens33>:8080;
+		proxy_pass http://172.16.2.2:8080;
 	}
 }
 server {
 	listen 80;
 	server_name web.au-team.irpo;
  	location / {
-		### proxy_pass http://[ip-адрес hq-rtr.ens33]:8080;
-		proxy_pass http://172.16.4.2:8080;
+		### proxy_pass http://<ip-адрес hq-rtr_ens33>:8080;
+		proxy_pass http://172.16.1.2:8080;
 	}
 }
 
 - systemctl restart nginx
-На hq-cli в браузере открываем http://docker.au-team.irpo, должен открыться сайт из задания 6.
-Открываем http://web.au-team.irpo, должен открыться сайт из задания 7.
+На hq-cli в браузере открываем <http://docker.au-team.irpo>, должен открыться сайт из задания 6.
+Открываем <http://web.au-team.irpo>, там сайт из задания 7.
 
 10) Настройка web-based аутентификации на ISP:
 - dnf install httpd-tools -y
 - htpasswd -c /etc/nginx/.htpasswd WEB (P@ssw0rd)
 - nano /etc/nginx/nginx.conf
 Добавляем строчки auth_basic на 2 сервере:
-		auth_basic “Restricted Content”;
-		### auth_basic Restricted Content;
+		auth_basic "Restricted Content";
 		auth_basic_user_file /etc/nginx/.htpasswd;
 Проверяем:
 - nginx -t
 - systemctl restart nginx
-На hq-cli в браузере открываем http://web.au-team.irpo: логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
+На hq-cli в браузере открываем <http://web.au-team.irpo>
+логин - WEB, пароль - P@ssw0rd. Должен открыться сайт из задания 7.
 
 11) Установка Яндекс Браузера:
-Заходим в «Окно настройки РЕДОС», переходим во вкладку «Партнерские приложения» и нажимаем на Яндекс браузер. 
-После загрузки нажимаем на клавишу WIN и выбираем «Другие приложения». Переходим на вторую страницу и запускаем браузер.
+Заходим в «Окно настройки РЕДОС», переходим во вкладку «Партнерские приложения» и нажимаем на Яндекс браузер. После загрузки нажимаем на клавишу WIN и выбираем «Другие приложения».
+Переходим на вторую страницу и запускаем браузер.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. Выполняем импортирование пользователей на сервере BR-SRV:
+cat /mnt/Users.csv
+nano import.sh
+
+#!/bin/bash
+tail -n +2 /mnt/Users.csv | while IFS=';' read -r firstName lastName _ _ ou _ _ _ _ password
+do
+samba-tool ou create "OU=$ou"
+samba-tool user create "${firstName}${lastName}" "P@ssw0rd1" \
+--userou="OU=$ou"
+done
+
+chmod +x import.sh
+./import.sh
+
+На HQ-CLI попробовать зайти по следующим данным: (ctrl+alt+f2)
+Логин: MalachiAlexander@au-team.irpo
+Пароль: P@ssw0rd1
+
+2. Выполните настройку центра сертификации на базе HQ-SRV:
+dnf install openssl-gost-engine
+openssl-switch-config gost
+update-crypto-policies --set GOST-ONLY:GOST
+update-crypto-policies --show
+openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out CA.key
+openssl req -new -x509 -md_gost12_256 -days 365 -key CA.key -out CA.crt -subj "/C=RU/ST=Russia/L=Kazan/O=MCK-KTITS/OU=MCK-KTITS CA/CN=MCKKTITS CA Root"
+openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out au-team.irpo.key
+nano au-team.irpo.ext
+
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = au-team.irpo
+DNS.2 = docker.au-team.irpo
+DNS.3 = web.au-team.irpo
+IP.1 = 172.16.1.2
+IP.2 = 172.16.2.2
+
+openssl req -new -md_gost12_256 -key au-team.irpo.key -out au-team.irpo.csr -subj "/C=RU/L=Kazan/O=AU-TEAM Site GOST/CN=*.au-team.irpo"
+openssl x509 -req -in au-team.irpo.csr -CA CA.crt -CAkey CA.key -CAcreateserial -out au-team.irpo.crt -days 30 -extfile au-team.irpo.ext
+cat au-team.irpo.crt CA.crt > fullchain.crt
+openssl-switch-config default
+update-crypto-policies --set DEFAULT
+mkdir -p /home/sshuser/certs
+cp fullchain.crt /home/sshuser/certs
+cp au-team.irpo.key /home/sshuser/certs
+cp CA.crt /home/sshuser/certs
+chmod 755 -R /home/sshuser/certs
+
+Переходим на ISP:
+dnf install openssl-gost-engine
+openssl-switch-config gost
+update-crypto-policies --set GOST-ONLY:GOST
+update-crypto-policies --show
+mkdir -p /etc/ssl/site
+scp -P 2026 sshuser@172.16.1.2:/home/sshuser/certs/* /etc/ssl/site
+nano /etc/nginx/nginx.conf
+
+server {
+	listen 443 ssl;
+ 	server_name docker.au-team.irpo;
+ 	ssl_certificate /etc/ssl/site/fullchain.crt;
+ 	ssl_certificate_key /etc/ssl/site/au-team.irpo.key;
+ 	ssl_ciphers GOST2012-GOST8912-GOST8912:HIGH:MEDIUM;
+ 	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+ 	ssl_prefer_server_ciphers on;
+ 	location / {
+ 		proxy_pass http://172.16.2.2:8080;
+ 	}
+}
+
+server {
+	listen 443 ssl;
+ 	server_name web.au-team.irpo;
+ 	ssl_certificate /etc/ssl/site/fullchain.crt;
+ 	ssl_certificate_key /etc/ssl/site/au-team.irpo.key;
+ 	ssl_ciphers GOST2012-GOST8912-GOST8912:HIGH:MEDIUM;
+ 	ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+ 	ssl_prefer_server_ciphers on;
+ 	location / {
+ 		auth_basic "Restricted Content";
+ 		auth_basic_user_file /etc/nginx/.htpasswd;
+ 		proxy_pass http://172.16.1.2:8080;
+ 	}
+}
+
+nginx -t
+Если команда не выдала ошибок, то перезапускаем сервис: systemctl restart nginx
+
+Переходим на HQ-CLI:
+Монтируем Additional.iso:
+mount /dev/cdrom /mnt
+cp -r /mnt/cryptopro/linux-amd64/ .
+###scp -P 2026 sshuser@<ip hq-srv_ens33.100>:/home/sshuser/certs/CA.crt /home/username
+scp -P 2026 sshuser@192.168.100.2:/home/sshuser/certs/CA.crt /home/username
+chmod +x linux-amd64/*.sh
+./linux-amd64/install_gui.sh
+
+Открывается установщик КриптоПро, нажимаем далее; здесь необходимо выбрать все пакеты с помощью пробела и нажимаем далее; начинаем установку пакетов КриптоПро; после окончательной установки пакетов, 
+КриптоПро будет успешно установлен. При запросе лицензионного ключа, выбираем позже. Выходим из установщика. Находим приложение «Инструменты КриптоПро» и запускаем его.
+
+После открытия приложения необходимо перемещать мышь в окне или нажимать клавиши для генерации случайной последовательности. 
+Добавляем корневой сертификат во вкладку «Сертификаты», выбрав хранилище сертификатов «Доверенные корневые центры сертификации» и «Устанавливаем сертификат». 
+
+И добавляем сертификат центра, который копировали ранее: Выйдет уведомление о добавление сертификата, нажимаем «ОК». Проверяем наличие сертификата в хранилище:
+Запускаем Яндекс Браузер и проверяем сайты: <https:/docker.au-team.irpo> и <https://web.au-team.irpo>, подключения должны быть защищены.
+
+3. Устанавливаем strongswan на HQ-RTR и BR-RTR:
+dnf install strongswan -y
+systemctl enable --now strongswan
+
+HQ-RTR:
+nano /etc/strongswan/swanctl/conf.d/swanctl.conf
+
+connections {
+  my-tunnel {
+   local_addrs = 172.16.1.2
+   remote_addrs = 172.16.2.2
+   local {
+     auth = psk
+   }
+   remote {
+   auth = psk
+   }
+   children {
+    net {
+     mode = transport
+     esp_proposals = aes256-sha256
+   }
+  }
+ }
+}
+secrets {
+ ike-1 {
+  secret = "P@ssw0rd"
+ }
+}
+
+systemctl restart strongswan
+
+BR-RTR:
+nano /etc/strongswan/swanctl/conf.d/swanctl.conf
+
+connections {
+  my-tunnel {
+   local_addrs = 172.16.2.2
+   remote_addrs = 172.16.1.2
+   local {
+     auth = psk
+   }
+   remote {
+   auth = psk
+   }
+   children {
+    net {
+     mode = transport
+     esp_proposals = aes256-sha256
+   }
+  }
+ }
+}
+secrets {
+ ike-1 {
+  secret = "P@ssw0rd"
+ }
+}
+
+systemctl restart strongswan
+
+Принудительно инициируем соединение (BR-RTR или HQ-RTR):
+swanctl --initiate --child net
+swanctl --list-conns
+Также дополнительно проверяем, например, с HQ-RTR, что пакеты имеют заголовок ESP, что подтверждает работу IPSec:
+tcpdump -i ens33 -n host 172.16.2.2
+
+4. Настройте межсетевой экран на маршрутизаторах HQ-RTR и BR-RTR на сеть в сторону ISP:
+На HQ-RTR:
+firewall-cmd --permanent --zone=external --change-interface=ens33
+firewall-cmd --permanent --zone=internal --change-interface=ens34
+firewall-cmd --permanent --zone=internal --change-interface=ens34.100
+firewall-cmd --permanent --zone=internal --change-interface=ens34.200
+firewall-cmd --permanent --zone=internal --add-interface=tun0
+firewall-cmd --permanent --new-policy int-to-ext
+firewall-cmd --permanent --policy int-to-ext --add-ingress-zone=internal
+firewall-cmd --permanent --policy int-to-ext --add-egress-zone=external
+firewall-cmd --permanent --policy int-to-ext --set-target=ACCEPT
+firewall-cmd --permanent --zone=external --add-service=http
+firewall-cmd --permanent --zone=external --add-service=https
+firewall-cmd --permanent --zone=external --add-service=dns
+firewall-cmd --permanent --zone=external --add-service=ntp
+firewall-cmd --permanent --zone=external --add-port=2026/tcp
+firewall-cmd --permanent --zone=external --add-port=8080/tcp
+firewall-cmd --permanent --zone=external --add-protocol=gre
+firewall-cmd --permanent --zone=external --add-port=500/udp
+firewall-cmd --permanent --zone=external --add-port=4500/udp
+firewall-cmd --permanent --zone=external --add-protocol=esp
+firewall-cmd --permanent --zone=external --add-protocol=ah
+firewall-cmd --permanent --zone=internal --add-protocol=ospf
+firewall-cmd --permanent --zone=external --add-forward-port=port=2026:proto=tcp:toport=2026:toaddr=192.168.100.2
+firewall-cmd --permanent --zone=external --add-forward-port=port=8080:proto=tcp:toport=80:toaddr=192.168.100.2
+firewall-cmd --permanent --direct --add-passthrough ipv4 -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+firewall-cmd --reload
+
+На BR-RTR:
+firewall-cmd --permanent --zone=external --change-interface=ens33
+firewall-cmd --permanent --zone=internal --change-interface=ens34
+firewall-cmd --permanent --zone=internal --add-interface=tun0
+firewall-cmd --permanent --new-policy int-to-ext
+firewall-cmd --permanent --policy int-to-ext --add-ingress-zone=internal
+firewall-cmd --permanent --policy int-to-ext --add-egress-zone=external
+firewall-cmd --permanent --policy int-to-ext --set-target=ACCEPT
+firewall-cmd --permanent --zone=external --add-service=http
+firewall-cmd --permanent --zone=external --add-service=https
+firewall-cmd --permanent --zone=external --add-service=dns
+firewall-cmd --permanent --zone=external --add-service=ntp
+firewall-cmd --permanent --zone=external --add-port=2026/tcp
+firewall-cmd --permanent --zone=external --add-port=8080/tcp
+firewall-cmd --permanent --zone=external --add-protocol=gre
+firewall-cmd --permanent --zone=external --add-port=500/udp
+firewall-cmd --permanent --zone=external --add-port=4500/udp
+firewall-cmd --permanent --zone=external --add-protocol=esp
+firewall-cmd --permanent --zone=external --add-protocol=ah
+firewall-cmd --permanent --zone=internal --add-protocol=ospf
+firewall-cmd --permanent --zone=external --add-forward-port=port=2026:proto=tcp:toport=2026:toaddr=172.30.100.2
+firewall-cmd --permanent --zone=external --add-forward-port=port=8080:proto=tcp:toport=8080:toaddr=172.30.100.2
+firewall-cmd --permanent --direct --add-passthrough ipv4 -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+firewall-cmd --reload 
+
+5. Настройте принт-сервер cups на сервере HQ-SRV: (ctrl+alt+f2)
+dnf install cups cups-pdf -y --nogpgcheck
+systemctl enable --now cups
+nano /etc/cups/cupsd.conf
+В строке Listen localhost:631 меняем на Listen *:631
+
+В строках с доступом на сервер и с доступом на страницу админа добавляем строки Allow all:
+# Restrict access to the server...
+# Restrict access to the admin pages...
+
+systemctl restart cups
+lpadmin -x Virtual_PDF (команда удаляет все ранее созданные принтеры)
+lpadmin -p PDF -E -v cups-pdf:/ -m "CUPS-PDF_noopt.ppd"
+lpstat -p
+
+Переходим в настройки на HQ-CLI и добавляем принтер. Для этого сначала необходимо разблокировать доступ к добавлению и изменению настроек:
+Добавляем принтер: вводим <ip hq-srv> 192.168.100.2 -> Добавить. Настройки -> Использовать по умолчанию.
+После этого, дополнительно проверяем, выбрав пункт «Сведения о принтере», что принтер действительно с HQ-SRV. Должен быть указан IP HQ-SRV.
+
+6. Реализуйте логирование при помощи rsyslog на устройствах HQ-RTR, BR-RTR, BR-SRV:
+Переходим на HQ-SRV:
+nano /etc/rsyslog.conf
+
+Необходимо расскоментировать строки связанные с udp (module и input):
+
+# Provides UDP syslog reception...
+Раскоментировать последние 2 строки
+ 
+В конце добавляем шаблон для записи логов с удаленных серверов в /opt и исключения hq-srv из записи в папку /opt:
+$template RemoteLogs,"/opt/%HOSTNAME%/%HOSTNAME%.log"
+
+if $hostname != 'hq-srv' then {
+    *.warning ?RemoteLogs
+    & stop
+}
+
+На клиентах HQ-RTR, BR-RTR, BR-SRV в файле /etc/rsyslog.conf добавляем запись, для отправки логов на сервер логов (в самом конце):
+nano /etc/rsyslog.conf
+
+*.warning						@<ip hq-srv> 192.168.100.2:514
+На HQ-RTR, BR-RTR, BR-SRV, HQ-SRV перезапускаем службу rsyslog:
+systemctl restart rsyslog
+На HQ-SRV настраиваем ротацию логов. Для этого создаём файл
+nano /etc/logrotate.d/remote_logs
+
+/opt/*/*.log {
+ weekly
+ rotate 4
+ compress
+ minsize 10M
+ missingok
+ notifempty
+ sharedscripts
+ postrotate
+ /usr/bin/systemctl kill -s HUP rsyslog.service >/dev/null 2>&1 || true
+ endscript
+}
+
+На HQ-RTR, BR-RTR, BR-SRV, HQ-SRV перезапускаем службу logrotate:
+systemctl restart logrotate
+
+7. На сервере HQ-SRV реализуйте мониторинг устройств с помощью открытого программного обеспечения
+dnf install -y grafana prometheus prometheus-node_exporter --nogpgcheck
+nano /etc/prometheus/prometheus.yml
+
+Редактируем там строчку, добавив адреса <ip hq-srv> 192.168.100.2:9100 и <ip br-srv> 172.30.100.2:9100:
+static_configs:
+- targets: ["localhost:9090","192.168.100.2:9100","172.30.100.2:9100"]
+
+systemctl enable --now grafana-server
+systemctl enable --now prometheus
+systemctl enable --now node_exporter
+
+Разворачиваем на BR-SRV node_exporter:
+dnf install -y prometheus-node_exporter
+systemctl enable --now node_exporter
+
+Переходим на HQ-CLI для настройки Grafana. Открываем браузер и переходим по адресу <http://192.168.100.2:3000>. Откроется веб-интерфейс Grafana.
+Авторизуемся с помощью логина и пароля admin:admin. После этого Grafana запросит новый пароль для учетной записи admin. Задаём новый пароль P@ssw0rd.
+
+После чего, открывается веб-интерфейс Grafana. Добавляем подключение к Prometheus. Для этого переходим во вкладку Connections и добавляем новое подключение через «Add new connection».
+Находим в DataSources Prometheus -> В connection пишем адрес Prometheus – <http://localhost:9090>
+
+Добавляем Dashboard, выбрав вкладку Dashboards и создаём дашборд «Create Dashboard». Импортируем Dashboard, выбрав «Import Dashboard». 
+Добавляем номер dashboard 11074 и загружаем его «Load».
+
+После этого выбираем Prometheus, который ранее был подключен к Grafana и импортирует дашборд.
+В результате получаем дашборд с мониторингом серверов HQ-SRV и BR-SRV.
+
+После этого необходимо настроить доступ к мониторингу по доменному имени http://mon.au-team.irpo. Для этого переходим на HQ-SRV
+и открываем файл /opt/dns/au-team.irpo и добавляем A запись для mon.auteam.irpo, указав адрес HQ-SRV.
+
+nano /opt/dns/au-team.irpo
+Добавляем следующую запись: mon	A	<ip hq-srv> 192.168.100.2
+
+systemctl restart named
+Теперь открываем мониторинг на HQ-CLI через адрес <http://mon.auteam.irpo:3000>
+
+8. Реализуйте механизм инвентаризации машин HQ-SRV и HQ-CLI через Ansible на BR-SRV:
+cp /mnt/playbook/get_hostname_address.yml /etc/ansible
+nano /etc/ansible/demo.ini
+
+###[inventory]
+###hq-cli ansible_host=<ip hq-cli> ansible_user=username
+###hq-srv ansible_host=<ip hq-srv> ansible_port=2026 ansible_user=sshuser
+
+[inventory]
+hq-cli ansible_host=192.168.200.2 ansible_user=username
+hq-srv ansible_host=192.168.100.2 ansible_port=2026 ansible_user=sshuser
+
+nano /etc/ansible/get_hostname_address.yml (сменить язык - ctrl+shift)
+
+- name: Inventory of HQ-SRV and HQ-CLI
+  hosts: inventory
+  gather_facts: yes
+  tasks:
+   - name: получение данных с хоста
+     copy:
+       dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml
+       content: |
+         Hostname: {{ ansible_hostname }}
+         IP_Address: {{ ansible_default_ipv4.address }}
+     delegate_to: localhost
+
+mkdir -p /etc/ansible/PC-INFO
+cd /etc/ansible
+Запускаем исполнение плейбука:
+ansible-playbook get_hostname_address.yml -i demo.ini
+ls /etc/ansible/PC-INFO
+cat /etc/ansible/PC-INFO/hq-cli.yml
+cat /etc/ansible/PC-INFO/hq-srv.yml
+
+9. На HQ-SRV настройте программное обеспечение fail2ban для защиты ssh
+dnf install fail2ban -y --nogpgcheck
+nano /etc/fail2ban/jail.local 
+
+[sshd]
+enabled = true
+port = 2026
+filter = sshd
+maxretry = 3
+bantime = 60
+findtime = 120
+
+systemctl restart fail2ban
+systemctl enable --now fail2ban
+fail2ban-client status sshd
+
+Проверка на HQ-RTR:
+ssh sshuser@192.168.100.2 -p 2026. Вводим неправильный пароль для входа -> должно прийти уведомление на HQ-SRV.
+	
