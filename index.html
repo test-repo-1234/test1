@@ -80,6 +80,16 @@ systemctl disable firewalld
 iptables-save > /etc/sysconfig/iptables
 ПРОВЕРЯЕМ ПИНГИ НА 10.39.0.1 (8.8.8.8) С HQ-RTR и BR-RTR
 
+Задание 3. Создание локальных учетных записей на серверах HQ-SRV и BR-SRV: 
+1) Создание пользователя sshuser; 
+2) Пароль пользователя sshuser - P@ssw0rd; 
+3) Идентификатор пользователя 1010; 
+4) Пользователь sshuser должен иметь возможность запускать sudo без ввода пароля; 
+5) Создание пользователя net_admin на маршрутизаторах HQ-RTR и BR-RTR; 
+6) Пароль пользователя net_admin - P@ssw0rd; 
+7) При настройке ОС на базе Linux, запускать sudo без ввода пароля; 
+8) При настройке ОС отличных от Linux пользователь должен обладать максимальными привилегиями.
+	
 --- Создание пользователя sshuser на серверах HQ-SRV и BR-SRV
 useradd -m -U -s /bin/bash -u 1010 sshuser
 passwd sshuser
@@ -90,10 +100,21 @@ echo “sshuser ALL=(ALL) NOPASSWD: ALL” >> /etc/sudoers
 --- Создание пользователя net_admin на маршрутизаторах HQ-RTR и BR-RTR
 useradd -m -U -s /bin/bash net_admin
 passwd net_admin
-P@$$w0rd
-P@$$w0rd
+P@ssw0rd
+P@ssw0rd
 echo “net_admin ALL=(ALL) NOPASSWD: ALL” >> /etc/sudoers
+ 
+Задание 4. Настроить на интерфейсе HQ-RTR в сторону офиса HQ виртуальный коммутатор: 
+1) Сервер HQ-SRV должен находиться в ID VLAN 100 
+2) Клиент HQ-CLI в ID VLAN 200; 
+3) Создать подсеть управления с ID VLAN 999;
 
+Задание 5. 	Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV:
+1) Для подключения необходимо использовать порт 2026; 
+2) Разрешить подключения только пользователю sshuser; 
+3) Ограничить количество попыток входа до двух; 
+4) Настроить баннер «Authorized access only».
+	
 --- Настройка безопасного удаленного доступа на серверах HQ-SRV и BR-SRV
 echo “Authorized access only” > /etc/ssh/banner.txt
 
@@ -114,6 +135,7 @@ systemctl restart sshd
 ssh -l sshuser 172.30.100.10 -p 2026  ------ BR-RTR
 ssh -l sshuser 192.168.100.10 -p 2026 ------ HQ-RTR
 
+Задание 6. Между офисами HQ и BR, на маршрутизаторах HQ-RTR и BR-RTR необходимо сконфигурировать ip туннель: 	
 --- Заходим в nmtui
 Стрелочка вправо – добавить
 Выбираем IP-Туннель
@@ -230,11 +252,11 @@ zone "200.168.192.in-addr.arpa" IN {
 	file "/opt/dns/200.168.192.in-addr.arpa";
 };
 # Добавляем после существующих зон
-zone "4.16.172.in-addr.arpa" IN {
+zone "1.16.172.in-addr.arpa" IN {
     type master;
     file "/opt/dns/4.16.172.in-addr.arpa";
 };
-zone "5.16.172.in-addr.arpa" IN {
+zone "2.16.172.in-addr.arpa" IN {
     type master;
     file "/opt/dns/5.16.172.in-addr.arpa";
 };
@@ -296,7 +318,7 @@ nano 99.168.192.in-addr.arpa
 10	PTR	hq-srv
 
 cp /var/named/named.empty /opt/dns/4.16.172.in-addr.arpa
-nano /opt/dns/4.16.172.in-addr.arpa
+nano /opt/dns/1.16.172.in-addr.arpa
 
 @       IN SOA au-team.irpo. au-team.irpo. (
 
@@ -305,7 +327,7 @@ nano /opt/dns/4.16.172.in-addr.arpa
 2	PTR 	hq-rtr.au-team.irpo.
 
 cp /var/named/named.empty /opt/dns/5.16.172.in-addr.arpa
-nano /opt/dns/5.16.172.in-addr.arpa
+nano /opt/dns/2.16.172.in-addr.arpa
 
 @      	IN SOA au-team.irpo. au-team.irpo. (
 
