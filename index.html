@@ -1182,8 +1182,9 @@ systemctl enable --now node_exporter
 Добавляем номер dashboard 11074 и загружаем его «Load».
 
 После этого выбираем Prometheus, который ранее был подключен к Grafana и импортирует дашборд.
-В результате получаем дашборд с мониторингом серверов HQ-SRV и BR-SRV.
-
+В результате получаем дашборд с мониторингом серверов HQ-SRV и BR-SRV. Если показывает ! - необходимо перейти в настройки (edit -> settings -> variables -> выбрать режим custom)
+Name, label - DS__VICTORIAMETRICS. Далее выбрать prometheus. 
+	
 После этого необходимо настроить доступ к мониторингу по доменному имени http://mon.au-team.irpo. Для этого переходим на HQ-SRV
 и открываем файл /opt/dns/au-team.irpo и добавляем A запись для mon.auteam.irpo, указав адрес HQ-SRV.
 
@@ -1191,7 +1192,7 @@ nano /opt/dns/au-team.irpo
 Добавляем следующую запись: mon	A	[ip hq-srv] 192.168.100.2
 
 systemctl restart named
-Теперь открываем мониторинг на HQ-CLI через адрес [http://mon.auteam.irpo:3000]
+Теперь открываем мониторинг на HQ-CLI через адрес [http://mon.au-team.irpo:3000]
 
 Задание 8. Реализовать механизм инвентаризации машин HQ-SRV и HQ-CLI через Ansible на BR-SRV:
 1) Плейбук должен собирать информацию о рабочих местах: 
