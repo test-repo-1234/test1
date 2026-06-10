@@ -132,8 +132,8 @@ semanage port -m -t ssh_port_t -p tcp 2026
 systemctl restart sshd
 
 --- Далее с HQ-RTR и BR-RTR проверяем доступ до соответствующих серверов в своей локальной сети:
-ssh -l sshuser 172.30.100.10 -p 2026  ------ BR-RTR
-ssh -l sshuser 192.168.100.10 -p 2026 ------ HQ-RTR
+ssh -l sshuser 172.30.100.2 -p 2026  ------ BR-RTR
+ssh -l sshuser 192.168.100.2 -p 2026 ------ HQ-RTR
 
 Задание 6. Между офисами HQ и BR, на маршрутизаторах HQ-RTR и BR-RTR необходимо сконфигурировать ip туннель: 	
 --- Заходим в nmtui
