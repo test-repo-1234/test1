@@ -1198,7 +1198,7 @@ systemctl enable --now node_exporter
 
 После этого выбираем Prometheus, который ранее был подключен к Grafana и импортирует дашборд.
 В результате получаем дашборд с мониторингом серверов HQ-SRV и BR-SRV. Если показывает ! - необходимо перейти в настройки (edit -> settings -> variables -> выбрать режим custom)
-Name, label - DS__VICTORIAMETRICS. Далее выбрать prometheus. 
+Name, label - DS__VICTORIAMETRICS. Далее выбрать prometheus. На главном экране, где будет "DS__VICTORIAMETRICS" написать в строке поиска "prometheus" и появится дашборд.
 	
 После этого необходимо настроить доступ к мониторингу по доменному имени http://mon.au-team.irpo. Для этого переходим на HQ-SRV
 и открываем файл /opt/dns/au-team.irpo и добавляем A запись для mon.auteam.irpo, указав адрес HQ-SRV.
