@@ -314,7 +314,7 @@ docker	A	172.16.2.1
 cp /var/named/named.empty 100.168.192.in-addr.arpa
 nano 100.168.192.in-addr.arpa
 
-@       IN SOA au-team.irpo. au-team.irpo. (
+@	IN SOA au-team.irpo. au-team.irpo. (
 
 	NS	hq-srv.au-team.irpo.
 1	PTR	hq-rtr
@@ -323,7 +323,7 @@ nano 100.168.192.in-addr.arpa
 cp /var/named/named.empty 200.168.192.in-addr.arpa
 nano 200.168.192.in-addr.arpa
 
-@       IN SOA au-team.irpo. au-team.irpo. (
+@	IN SOA au-team.irpo. au-team.irpo. (
 
 	NS	hq-srv.au-team.irpo.
 1	PTR	hq-rtr
@@ -342,7 +342,7 @@ nano 99.168.192.in-addr.arpa
 cp /var/named/named.empty /opt/dns/4.16.172.in-addr.arpa
 nano /opt/dns/1.16.172.in-addr.arpa
 
-@       IN SOA au-team.irpo. au-team.irpo. (
+@	IN SOA au-team.irpo. au-team.irpo. (
 
 	NS  	hq-srv.au-team.irpo.
 1	PTR 	isp.au-team.irpo.
@@ -351,7 +351,7 @@ nano /opt/dns/1.16.172.in-addr.arpa
 cp /var/named/named.empty /opt/dns/5.16.172.in-addr.arpa
 nano /opt/dns/2.16.172.in-addr.arpa
 
-@      	IN SOA au-team.irpo. au-team.irpo. (
+@	IN SOA au-team.irpo. au-team.irpo. (
 
 	NS  	hq-srv.au-team.irpo.
 1	PTR 	isp.au-team.irpo.
@@ -360,20 +360,30 @@ nano /opt/dns/2.16.172.in-addr.arpa
 cp /var/named/named.empty /opt/dns/100.30.172.in-addr.arpa
 nano /opt/dns/100.30.172.in-addr.arpa
 
-@      	IN SOA au-team.irpo. au-team.irpo. (
-	
-	NS  	hq-srv.au-team.irpo.
+$TTL 3H
+@	IN SOA au-team.irpo. au-team.irpo. (
+    						0		; serial
+    						1D		; refresh
+    						1H		; retry
+							1W		; expire
+    						3H )	; minimum
+	NS		hq-srv.au-team.irpo.
 1	PTR 	br-rtr.au-team.irpo.
-10	PTR 	br-srv.au-team.irpo.
+10	PTR 	br-srv.au-team.irpo.	
 
 cp /var/named/named.empty /opt/dns/10.10.10.in-addr.arpa
 nano /opt/dns/10.10.10.in-addr.arpa
 
-@      	IN SOA au-team.irpo. au-team.irpo. (
-
-	NS  	hq-srv.au-team.irpo.
-1	PTR 	hq-rtr.au-team.irpo.
-2	PTR 	br-rtr.au-team.irpo.
+$TTL 3H
+@	IN SOA au-team.irpo. au-team.irpo. (
+    						0		; serial
+    						1D		; refresh
+    						1H		; retry
+							1W		; expire
+    						3H )	; minimum
+	NS	hq-srv.au-team.irpo.
+1	PTR hq-rtr.au-team.irpo.
+2	PTR br-rtr.au-team.irpo.	
 
 chmod -R 777 /opt/dns
 ПРОВЕРЯЕМ КОНФИГУРАЦИЮ И ИСПРАВЛЯЕМ ОШИБКИ ЕСЛИ ЕСТЬ
