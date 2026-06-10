@@ -364,12 +364,12 @@ $TTL 3H
 @	IN SOA au-team.irpo. au-team.irpo. (
 						0		; serial
 						1D		; refresh
-    					1H		; retry
+						1H		; retry
 						1W		; expire
-    					3H )	; minimum
+						3H	)	; minimum
 	NS	hq-srv.au-team.irpo.
 1	PTR	br-rtr.au-team.irpo.
-10	PTR	br-srv.au-team.irpo.	
+10	PTR br-srv.au-team.irpo.	
 
 cp /var/named/named.empty /opt/dns/10.10.10.in-addr.arpa
 nano /opt/dns/10.10.10.in-addr.arpa
@@ -380,7 +380,7 @@ $TTL 3H
 						1D		; refresh
 						1H		; retry
 						1W		; expire
-						3H )	; minimum
+						3H	)	; minimum
 	NS	hq-srv.au-team.irpo.
 1	PTR	hq-rtr.au-team.irpo.
 2	PTR br-rtr.au-team.irpo.	
