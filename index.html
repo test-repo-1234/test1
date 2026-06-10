@@ -125,6 +125,7 @@ MaxAuthTries 2
 Banner /etc/ssh/banner.txt
 
 Разрешаем подключение по порту 2026
+semanage port -a -t ssh_port_t -p tcp 2026	
 semanage port -m -t ssh_port_t -p tcp 2026
 
 Перезапускаем ssh
