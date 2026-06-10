@@ -40,23 +40,23 @@ ISP, BR-RTR, HQ-RTR:
 echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf 
 sysctl -p
  
-1) ISP: 	                    
+1) ISP: (nmtui)                 
 ens33: DHCP - DHCP
 ens34: 172.16.1.1/28 
-ens35: 172.16.1.1/28  
-2) HQ-RTR:
+ens35: 172.16.2.1/28  
+2) HQ-RTR: (nmtui)
 ens33: 172.16.1.2/28 - 172.16.1.1
 ens34.vlan100: 192.168.100.1/27 
 ens34.vlan200: 192.168.200.1/28 
 ens34.vlan999: 192.168.99.1/29 	
-3) BR-RTR:
+3) BR-RTR: (nmtui)
 ens33: 172.16.2.2/28 - 172.16.2.1
 ens34: 172.30.100.1/28
-4) HQ-SRV:
+4) HQ-SRV: (nmtui)
 ens33.vlan100: 192.168.100.2/27 - 192.168.100.1
-5) BR-SRV:
+5) BR-SRV: (nmtui)
 ens33: 172.30.100.2/28 - 172.30.100.1
-6) HQ-CLI:
+6) HQ-CLI: (nmtui)
 ens33.vlan200: DHCP - DHCP 
 
 --- После присвоения IP-адреса устройствам, необходимо обновить все интерфейсы
